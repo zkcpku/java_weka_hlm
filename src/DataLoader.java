@@ -15,6 +15,18 @@ import weka.core.DenseInstance;
 
 public class DataLoader {
 
+    public static Instances dataLoaderString(List<String> train,List<Integer> train_label){
+        List<Feature> entities = new ArrayList<Feature>();
+        for (int i = 0; i < train.size(); i++) {
+            entities.add(string2featureWithHanLP(train.get(i),train_label.get(i)));
+        }
+
+        Instances tmp = generatePopularInstance(entities);
+//        System.out.println(tmp.toString());
+        return tmp;
+
+    }
+
     public static Instances dataLoader(List<String> train,List<Integer> train_label){
         List<Feature> entities = new ArrayList<Feature>();
         for (int i = 0; i < train.size(); i++) {
@@ -98,6 +110,37 @@ public class DataLoader {
                 }
             } while (str != null);
 
+        } catch (Exception e){
+        }
+
+        List<Double> percent = new ArrayList<Double>(Feature.attrNum - 1); // 最后一个attr是分类
+        for (int i = 0; i < Feature.attrNum - 1; i++) {
+            percent.add((double)count[i] / (double) sumcount * 100);
+        }
+
+        Feature rst = new Feature(percent,score);
+
+        return rst;
+    }
+
+    public static Feature string2featureWithHanLP(String str, int score){
+        int[] count = new int[Feature.attrNum - 1];
+        int sumcount = 0;
+        for (int i = 0; i < count.length; i++)
+            count[i] = 0;
+
+        Segment segment = new NShortSegment();
+        try{
+            List<Term> termList = segment.seg(str);
+
+            sumcount += termList.size();
+            for (int i = 0; i < termList.size(); ++i){
+                for (int j = 0; j < Feature.attrNum - 1; j++) {
+                    if (termList.get(i).word.equals(Feature.attributes[j])){
+                        count[j] += 1;
+                    }
+                }
+            }
         } catch (Exception e){
         }
 

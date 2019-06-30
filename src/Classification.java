@@ -16,10 +16,82 @@ import weka.classifiers.trees.LMT;
 import weka.core.FastVector;
 import weka.core.Instances;
 
+import javax.xml.crypto.Data;
+
 public class Classification {
     static Classifier bestmodel = null;
     static double bestAcc = 0.0;
 
+    public static void trainString(List<String> train,List<Integer> train_label, boolean verbose) throws Exception{
+        Instances train_set = DataLoader.dataLoaderString(train,train_label);
+        train_set.setClassIndex(train_set.numAttributes() - 1);
+
+        Instances[][] split = crossValidationSplit(train_set,10);
+        Instances[] trainingSplits = split[0];
+        Instances[] testingSplits = split[1];
+
+        Classifier[] models = {
+//                new J48(),
+//                new DecisionTable(),
+//                new DecisionStump(),
+//                new RandomTree(),
+                new LMT()
+//                new RandomForest(),
+//                new HoeffdingTree()
+
+        };
+
+        for (int i = 0; i < models.length; i++) {
+            FastVector predictions = new FastVector();
+
+            for (int j = 0; j < trainingSplits.length; j++) {
+                Evaluation validation = classify(models[i], trainingSplits[j], testingSplits[j]);
+                predictions.appendElements(validation.predictions());
+            }
+
+            double accuracy = calculateAccuracy(predictions);
+            if (accuracy > bestAcc){
+                bestAcc = accuracy;
+                bestmodel = models[i];
+
+            }
+            if (verbose){
+                System.out.println("Accuracy of "   + models[i].getClass().getSimpleName() + ":"
+                        + String.format("%.2f%%",accuracy)
+                        + "\n--------------------------------------");
+            }
+        }
+
+        if (verbose){
+            System.out.println("Best Accuracy of "   + bestmodel.getClass().getSimpleName() + ":"
+                    + String.format("%.2f%%",bestAcc)
+                    + "\n--------------------------------------");
+
+        }
+        return;
+    }
+    public static void trainString(List<String> train,List<Integer>train_label)throws Exception{
+        trainString(train,train_label,false);
+        return;
+    }
+    public static List<Integer> predictionString(List<String> test,List<Integer> test_label) throws Exception{
+        List<Integer> rst = new ArrayList<Integer>();
+        Instances test_set = DataLoader.dataLoaderString(test,test_label);
+        test_set.setClassIndex(test_set.numAttributes() - 1);
+
+        for (int i = 0; i < test_set.size(); i++) {
+            int this_rst = 0;
+            double poss = 0.0;
+            for (int j = 0; j < bestmodel.distributionForInstance(test_set.get(i)).length; j++) {
+                if (bestmodel.distributionForInstance(test_set.get(i))[j] > poss){
+                    poss = bestmodel.distributionForInstance(test_set.get(i))[j];
+                    this_rst = j;
+                }
+            }
+            rst.add(this_rst);
+        }
+        return rst;
+    }
 
     public static void train(List<String> train,List<Integer> train_label, boolean verbose) throws Exception{
         //先得到list <feature>
@@ -33,10 +105,10 @@ public class Classification {
         Instances[] testingSplits = split[1];
 
         Classifier[] models = {
-                new J48(),
-                new DecisionTable(),
-                new DecisionStump(),
-                new RandomTree(),
+//                new J48(),
+//                new DecisionTable(),
+//                new DecisionStump(),
+//                new RandomTree(),
                 new LMT(),
                 new RandomForest(),
                 new HoeffdingTree()

@@ -88,6 +88,8 @@ public class Main {
 //            System.out.print('\n');
 //        }
         Classification clf = new Classification();
+//        System.out.println(train.get(0));
+//        System.out.println(train_label.get(0));
         clf.train(train, train_label,true);
 
         List<Integer> test_label = new ArrayList<Integer>();
